@@ -1,0 +1,24 @@
+[package]
+name = "waystt-wrapper"
+version = "0.1.0"
+edition = "2021"
+description = "GTK4 overlay wrapper for waystt speech-to-text"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+# GTK4 and Layer Shell
+gtk4 = "0.10"
+gtk4-layer-shell = "0.7"
+
+# Error handling
+thiserror = "2.0"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI parsing
+clap = { version = "4.0", features = ["derive"] }
+
+# Unix process/signal handling
+nix = { version = "0.29", features = ["signal", "process"] }

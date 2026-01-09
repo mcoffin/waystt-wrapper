@@ -9,6 +9,7 @@ use std::rc::Rc;
 use std::time::Duration;
 
 use clap::Parser;
+use gtk4::gio;
 use gtk4::gdk;
 use gtk4::glib;
 use gtk4::prelude::*;
@@ -60,7 +61,7 @@ fn main() -> ExitCode {
         };
 
         // Create overlay window
-        let window = match create_overlay_window(app, &config) {
+        let (window, icon) = match create_overlay_window(app, &config) {
             Ok(w) => w,
             Err(e) => {
                 error!(error = %e, "Failed to create overlay window");
@@ -68,6 +69,9 @@ fn main() -> ExitCode {
                 return;
             }
         };
+
+        // Wrap icon in Rc for sharing with key handler
+        let icon = Rc::new(icon);
 
         // Wrap child in RefCell for interior mutability
         let child_cell: Rc<RefCell<Option<ChildProcess>>> = Rc::new(RefCell::new(Some(child)));
@@ -77,6 +81,7 @@ fn main() -> ExitCode {
         let child_for_key = child_cell.clone();
         let exit_code_for_key = exit_code.clone();
         let window_weak = window.downgrade();
+        let icon_for_key = icon.clone();
 
         controller.connect_key_pressed(move |_, keyval, _, _| {
             if keyval == gdk::Key::Escape {
@@ -88,19 +93,28 @@ fn main() -> ExitCode {
                         warn!(error = %e, "Failed to send SIGUSR1");
                     }
 
+                    // Change icon to waiting indicator
+                    icon_for_key.set_icon_name(Some("content-loading-symbolic"));
+
                     let exit_code_inner = exit_code_for_key.clone();
                     let window_weak_inner = window_weak.clone();
 
-                    // Wait for child asynchronously
+                    // Wait for child on a background thread to avoid blocking GTK main loop
                     glib::spawn_future_local(async move {
-                        match child.wait() {
-                            Ok(status) => {
+                        let result = gio::spawn_blocking(move || child.wait()).await;
+
+                        match result {
+                            Ok(Ok(status)) => {
                                 let code = status.code().unwrap_or(1);
                                 info!(exit_code = code, "Child process exited");
                                 exit_code_inner.set(code);
                             }
-                            Err(e) => {
+                            Ok(Err(e)) => {
                                 error!(error = %e, "Failed waiting for child");
+                                exit_code_inner.set(1);
+                            }
+                            Err(e) => {
+                                error!(error = ?e, "spawn_blocking failed");
                                 exit_code_inner.set(1);
                             }
                         }

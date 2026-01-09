@@ -7,7 +7,7 @@ use tracing::info;
 use crate::config::{Config, Position};
 use crate::error::{Result, WaysttWrapperError};
 
-pub fn create_overlay_window(app: &Application, config: &Config) -> Result<ApplicationWindow> {
+pub fn create_overlay_window(app: &Application, config: &Config) -> Result<(ApplicationWindow, Image)> {
     // Check layer shell support
     if !gtk4_layer_shell::is_supported() {
         return Err(WaysttWrapperError::LayerShellNotSupported);
@@ -85,5 +85,5 @@ pub fn create_overlay_window(app: &Application, config: &Config) -> Result<Appli
 
     info!(position = ?config.position, "Overlay window created");
 
-    Ok(window)
+    Ok((window, icon))
 }

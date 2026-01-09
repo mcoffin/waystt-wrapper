@@ -3,10 +3,10 @@ use clap::{Parser, ValueEnum};
 #[derive(Debug, Clone, Copy, ValueEnum, Default)]
 pub enum Position {
     TopLeft,
-    #[default]
     TopRight,
     BottomLeft,
     BottomRight,
+    #[default]
     Center,
 }
 
@@ -20,11 +20,11 @@ pub struct Args {
     pub icon: String,
 
     /// Icon size in pixels
-    #[arg(long, default_value = "48")]
+    #[arg(long, default_value = "96")]
     pub icon_size: i32,
 
     /// Position of the overlay on screen
-    #[arg(long, value_enum, default_value = "top-right")]
+    #[arg(long, value_enum, default_value = "center")]
     pub position: Position,
 
     /// Margin from screen edges in pixels

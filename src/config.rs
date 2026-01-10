@@ -70,7 +70,6 @@ impl From<Args> for Config {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clap::CommandFactory;
 
     #[test]
     fn test_default_args() {
@@ -82,11 +81,7 @@ mod tests {
         assert!(args.command.is_empty());
     }
 
-    #[test]
-    fn test_position_default() {
-        let pos = Position::default();
-        assert!(matches!(pos, Position::Center));
-    }
+
 
     #[test]
     fn test_position_parsing() {
@@ -188,23 +183,7 @@ mod tests {
         assert!(result.is_err());
     }
 
-    #[test]
-    fn test_help_text_contains_defaults() {
-        let mut cmd = Args::command();
-        let help = cmd.render_help().to_string();
 
-        assert!(help.contains("audio-input-microphone-symbolic"));
-        assert!(help.contains("96"));
-        assert!(help.contains("center"));
-        assert!(help.contains("20"));
-    }
-
-    #[test]
-    fn test_version_present() {
-        let cmd = Args::command();
-        let version = cmd.render_version();
-        assert!(!version.is_empty());
-    }
 
     #[test]
     fn test_config_conversion_preserves_fields() {

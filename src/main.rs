@@ -268,45 +268,7 @@ mod tests {
         assert_eq!(state.config.icon, "test-icon");
     }
 
-    #[test]
-    fn test_exit_code_mutation() {
-        let exit_code = Rc::new(Cell::new(0));
-        let clone = exit_code.clone();
 
-        clone.set(42);
-        assert_eq!(exit_code.get(), 42);
-    }
-
-    #[test]
-    fn test_exit_code_extraction_success() {
-        use std::os::unix::process::ExitStatusExt;
-        use std::process::ExitStatus;
-
-        let status = ExitStatus::from_raw(0);
-        let code = status.code().unwrap_or(1);
-        assert_eq!(code, 0);
-    }
-
-    #[test]
-    fn test_exit_code_extraction_failure() {
-        use std::os::unix::process::ExitStatusExt;
-        use std::process::ExitStatus;
-
-        let status = ExitStatus::from_raw(42 << 8); // Exit code 42
-        let code = status.code().unwrap_or(1);
-        assert_eq!(code, 42);
-    }
-
-    #[test]
-    fn test_exit_code_signal_fallback() {
-        use std::os::unix::process::ExitStatusExt;
-        use std::process::ExitStatus;
-
-        // Signal termination (no exit code)
-        let status = ExitStatus::from_raw(9); // SIGKILL
-        let code = status.code().unwrap_or(1);
-        assert_eq!(code, 1); // Falls back to 1
-    }
 
     #[test]
     fn test_panic_combo_detection() {

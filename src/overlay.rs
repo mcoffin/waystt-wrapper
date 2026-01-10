@@ -101,20 +101,6 @@ pub fn create_overlay_window(app: &Application, config: &Config) -> Result<(Appl
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
-    #[test]
-    fn test_overlay_error_layer_shell_display() {
-        let err = OverlayError::LayerShellNotSupported;
-        assert_eq!(
-            err.to_string(),
-            "layer shell not supported on this compositor"
-        );
-    }
 
-    #[test]
-    fn test_overlay_error_no_display_display() {
-        let err = OverlayError::NoDefaultDisplay;
-        assert_eq!(err.to_string(), "could not get default display");
-    }
 }

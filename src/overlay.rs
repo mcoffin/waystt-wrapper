@@ -11,6 +11,8 @@ use crate::config::{Config, Position};
 pub enum OverlayError {
     #[error("layer shell not supported on this compositor")]
     LayerShellNotSupported,
+    #[error("could not get default display")]
+    NoDefaultDisplay,
 }
 
 pub type Result<T> = std::result::Result<T, OverlayError>;
@@ -85,8 +87,9 @@ pub fn create_overlay_window(app: &Application, config: &Config) -> Result<(Appl
         }",
     );
 
+    let display = Display::default().ok_or(OverlayError::NoDefaultDisplay)?;
     gtk4::style_context_add_provider_for_display(
-        &Display::default().expect("Could not get default display"),
+        &display,
         &provider,
         gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );
@@ -94,4 +97,24 @@ pub fn create_overlay_window(app: &Application, config: &Config) -> Result<(Appl
     info!(position = ?config.position, "Overlay window created");
 
     Ok((window, icon))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_overlay_error_layer_shell_display() {
+        let err = OverlayError::LayerShellNotSupported;
+        assert_eq!(
+            err.to_string(),
+            "layer shell not supported on this compositor"
+        );
+    }
+
+    #[test]
+    fn test_overlay_error_no_display_display() {
+        let err = OverlayError::NoDefaultDisplay;
+        assert_eq!(err.to_string(), "could not get default display");
+    }
 }

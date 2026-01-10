@@ -244,3 +244,103 @@ fn main() -> ExitCode {
 
     ExitCode::from(code as u8)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_app_state_creation() {
+        let config = Config {
+            icon: "test-icon".to_string(),
+            icon_size: 64,
+            position: config::Position::Center,
+            margin: 10,
+            command: vec!["echo".to_string()],
+        };
+
+        let state = AppState {
+            exit_code: Rc::new(Cell::new(0)),
+            config: Rc::new(config),
+        };
+
+        assert_eq!(state.exit_code.get(), 0);
+        assert_eq!(state.config.icon, "test-icon");
+    }
+
+    #[test]
+    fn test_exit_code_mutation() {
+        let exit_code = Rc::new(Cell::new(0));
+        let clone = exit_code.clone();
+
+        clone.set(42);
+        assert_eq!(exit_code.get(), 42);
+    }
+
+    #[test]
+    fn test_exit_code_extraction_success() {
+        use std::os::unix::process::ExitStatusExt;
+        use std::process::ExitStatus;
+
+        let status = ExitStatus::from_raw(0);
+        let code = status.code().unwrap_or(1);
+        assert_eq!(code, 0);
+    }
+
+    #[test]
+    fn test_exit_code_extraction_failure() {
+        use std::os::unix::process::ExitStatusExt;
+        use std::process::ExitStatus;
+
+        let status = ExitStatus::from_raw(42 << 8); // Exit code 42
+        let code = status.code().unwrap_or(1);
+        assert_eq!(code, 42);
+    }
+
+    #[test]
+    fn test_exit_code_signal_fallback() {
+        use std::os::unix::process::ExitStatusExt;
+        use std::process::ExitStatus;
+
+        // Signal termination (no exit code)
+        let status = ExitStatus::from_raw(9); // SIGKILL
+        let code = status.code().unwrap_or(1);
+        assert_eq!(code, 1); // Falls back to 1
+    }
+
+    #[test]
+    fn test_panic_combo_detection() {
+        // Test that Ctrl+Alt is detected correctly
+        let modifiers = gdk::ModifierType::ALT_MASK | gdk::ModifierType::CONTROL_MASK;
+        let is_panic =
+            modifiers.contains(gdk::ModifierType::ALT_MASK | gdk::ModifierType::CONTROL_MASK);
+        assert!(is_panic);
+    }
+
+    #[test]
+    fn test_non_panic_combo() {
+        // Test that Escape without modifiers doesn't trigger panic
+        let modifiers = gdk::ModifierType::empty();
+        let is_panic =
+            modifiers.contains(gdk::ModifierType::ALT_MASK | gdk::ModifierType::CONTROL_MASK);
+        assert!(!is_panic);
+    }
+
+    #[test]
+    fn test_partial_modifier_not_panic() {
+        // Test that Ctrl+Escape (without Alt) doesn't trigger panic
+        let modifiers = gdk::ModifierType::CONTROL_MASK;
+        let is_panic =
+            modifiers.contains(gdk::ModifierType::ALT_MASK | gdk::ModifierType::CONTROL_MASK);
+        assert!(!is_panic);
+    }
+
+    #[test]
+    fn test_alt_only_not_panic() {
+        // Test that Alt+Escape (without Ctrl) doesn't trigger panic
+        let modifiers = gdk::ModifierType::ALT_MASK;
+        let is_panic =
+            modifiers.contains(gdk::ModifierType::ALT_MASK | gdk::ModifierType::CONTROL_MASK);
+        assert!(!is_panic);
+    }
+}

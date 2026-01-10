@@ -5,12 +5,20 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use tracing::info;
 
 use crate::config::{Config, Position};
-use crate::error::{Result, WaysttWrapperError};
+
+/// Error type for overlay window creation
+#[derive(Debug, thiserror::Error)]
+pub enum OverlayError {
+    #[error("layer shell not supported on this compositor")]
+    LayerShellNotSupported,
+}
+
+pub type Result<T> = std::result::Result<T, OverlayError>;
 
 pub fn create_overlay_window(app: &Application, config: &Config) -> Result<(ApplicationWindow, Image)> {
     // Check layer shell support
     if !gtk4_layer_shell::is_supported() {
-        return Err(WaysttWrapperError::LayerShellNotSupported);
+        return Err(OverlayError::LayerShellNotSupported);
     }
 
     info!("Creating overlay window");
